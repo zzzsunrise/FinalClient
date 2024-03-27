@@ -42,7 +42,7 @@
             // text_IP
             // 
             this.text_IP.Location = new System.Drawing.Point(90, 49);
-            this.text_IP.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.text_IP.Margin = new System.Windows.Forms.Padding(2);
             this.text_IP.Name = "text_IP";
             this.text_IP.Size = new System.Drawing.Size(144, 21);
             this.text_IP.TabIndex = 0;
@@ -70,7 +70,7 @@
             // text_PORT
             // 
             this.text_PORT.Location = new System.Drawing.Point(75, 55);
-            this.text_PORT.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.text_PORT.Margin = new System.Windows.Forms.Padding(2);
             this.text_PORT.Name = "text_PORT";
             this.text_PORT.Size = new System.Drawing.Size(144, 21);
             this.text_PORT.TabIndex = 2;
@@ -78,7 +78,7 @@
             // BTN_CONNECT
             // 
             this.BTN_CONNECT.Location = new System.Drawing.Point(75, 80);
-            this.BTN_CONNECT.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.BTN_CONNECT.Margin = new System.Windows.Forms.Padding(2);
             this.BTN_CONNECT.Name = "BTN_CONNECT";
             this.BTN_CONNECT.Size = new System.Drawing.Size(142, 21);
             this.BTN_CONNECT.TabIndex = 4;
@@ -92,9 +92,9 @@
             this.groupBox1.Controls.Add(this.text_PORT);
             this.groupBox1.Controls.Add(this.BTN_DISCONNECT);
             this.groupBox1.Location = new System.Drawing.Point(15, 22);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(2);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(2);
             this.groupBox1.Size = new System.Drawing.Size(250, 145);
             this.groupBox1.TabIndex = 5;
             this.groupBox1.TabStop = false;
@@ -102,8 +102,8 @@
             // 
             // BTN_DISCONNECT
             // 
-            this.BTN_DISCONNECT.Location = new System.Drawing.Point(75, 105);
-            this.BTN_DISCONNECT.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.BTN_DISCONNECT.Location = new System.Drawing.Point(75, 111);
+            this.BTN_DISCONNECT.Margin = new System.Windows.Forms.Padding(2);
             this.BTN_DISCONNECT.Name = "BTN_DISCONNECT";
             this.BTN_DISCONNECT.Size = new System.Drawing.Size(142, 21);
             this.BTN_DISCONNECT.TabIndex = 6;
@@ -129,7 +129,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.text_IP);
             this.Controls.Add(this.groupBox1);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form1";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
