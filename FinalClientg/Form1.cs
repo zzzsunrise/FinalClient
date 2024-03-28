@@ -15,8 +15,29 @@ using WMX3ApiCLR;
 
 namespace FinalClientg
 {
+    public struct Params
+    {
+        public bool isSetting;
+        public int velocity;
+        public int dccAcc;
+        public int target;
+        public Params(int velocity1, int dccAcc1, int target1)
+        {
+            velocity = velocity1;
+            dccAcc = dccAcc1;
+            target = target1;
+            isSetting = true;
+        }
+    }
     public partial class Form1 : Form
     {
+        Params baseParam;           //유저가 세팅하기 전 미리 기본값을 넣어둔 param
+        Params settingParam;            //유저가 세팅한 param (이게 비어있으면 baseParam을 사용하여 움직일 것)
+
+
+        const int Xaxis = 2;
+        const int Yaxis = 3;
+
         const int WaitTimeMilliseconds = 10000;
         const int AXIS0 = 0;
         const int AXIS1 = 1;
@@ -27,6 +48,8 @@ namespace FinalClientg
         int ret = 0;
         int err = 0;
         bool alreadyComm = false;
+        bool[] digitalOuptputs;
+        bool ableComm = false;
 
         private const int bufferSize = 1024; //메시지를 받을 버퍼의 크기
         private TcpClient client; //편리한 클래스의 client를 생성
@@ -50,10 +73,16 @@ namespace FinalClientg
             cmStatus = new CoreMotionStatus();
 
             // 1초마다 메시지 전송을 위한 타이머 설정
+
+            digitalOuptputs = new bool[8];
+
+            baseParam = new Params(360, 3600, 360);
+
             Timer timer = new Timer();
             timer.Interval = 1000; // 1초마다
             timer.Tick += timer1_Tick;
             timer.Start();
+
 
         }
 
@@ -122,7 +151,7 @@ namespace FinalClientg
                 if (bytesRead > 0)
                 {
                     dataReceived = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    
+
                     // 받은 메시지를 UI에 표시하기 위해 Invoke 사용
                     Invoke(new Action(() => ListBox_MSG.Items.Add(dataReceived)));
 
@@ -135,15 +164,19 @@ namespace FinalClientg
                     {
                         IOLED(dataReceived.Substring(2, 2), dataReceived[5] == 'N');
                     }
-                    if (dataReceived.Substring(0, 2) == "MO")
+                    if (dataReceived.Substring(5, 2) == "SE")
                     {
                         MOTORSERVOON1(dataReceived.Substring(10, 1));
                     }
-                    if(dataReceived.Length > 7)
+                    if (dataReceived.Length > 7)
                     {
                         if (dataReceived.Substring(5, 2) == "ST")
                         {
                             MOTORSTOP(dataReceived.Substring(9, 1));
+                        }
+                        else if (dataReceived.Substring(5, 2) == "HO")
+                        {
+                            MOTORHOME(dataReceived.Substring(10, 1));
                         }
 
                     }
@@ -189,10 +222,35 @@ namespace FinalClientg
 
         private void Init()
         {
+            //if (!alreadyComm)
+            //{
+            //    alreadyComm = true;
+            //    wmxlib.CreateDevice("C:\\Program Files\\SoftServo\\WMX3", DeviceType.DeviceTypeNormal);
+            //}
+            //else
+            //{
+            //    if (!ableComm)
+            //    {
+            //        DisplayError(wmxlib.StartCommunication(WaitTimeMilliseconds));
+            //        ableComm = true;
+            //        cmlib = new CoreMotion(wmxlib);
+            //        SendMessage("COMMU ON");
+            //    }
+            //    else
+            //    {
+            //        DisplayError(wmxlib.StopCommunication());
+            //        ableComm = false;
+            //        cmlib = new CoreMotion(wmxlib);
+            //        SendMessage("COMMU OFF");
+            //    }
+            //}
+
+
             if (alreadyComm)
             {
                 wmxlib.StopCommunication();
-                SendMessage("COMMU OFF");
+                SendMessage("COMMUN OFF");
+
             }
             else
             {
@@ -200,7 +258,7 @@ namespace FinalClientg
                 wmxlib.CreateDevice("C:\\Program Files\\SoftServo\\WMX3", DeviceType.DeviceTypeNormal);
                 DisplayError(wmxlib.StartCommunication(WaitTimeMilliseconds));
                 cmlib = new CoreMotion(wmxlib);
-                SendMessage("COMMU ON");
+                SendMessage("COMMUN ON");
             }
         }
 
@@ -210,7 +268,7 @@ namespace FinalClientg
 
             iolib.SetOutBit(temp / 8, temp % 8, Convert.ToByte(isOn));
         }
-      
+
         private void MOTORSERVOON1(string num)
         {
 
@@ -243,27 +301,83 @@ namespace FinalClientg
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
-           // try
+            if (alreadyComm)
+            {
+
+                DisplayError(cmlib.GetStatus(ref cmStatus));
+                string message = "X : ";
+                message += cmStatus.AxesStatus[Xaxis].ActualPos.ToString("0.00");
+                message += " ,Y : ";
+                message += cmStatus.AxesStatus[Yaxis].ActualPos.ToString("0.00");
+                SendMessage(message);
+                CheckBTN();
+
+            }
+            //-----------------------
+            // try
             //{
             //    // 메시지 생성
-            //    string message = "Hello, Server!";
-
             //    // 메시지를 바이트 배열로 변환하여 서버로 전송
-            //    byte[] data = Encoding.UTF8.GetBytes(message);
-            //    stream.Write(data, 0, data.Length);
-
             //    // 전송한 메시지를 리스트박스에 표시
             //    ListBox_MSG.Items.Add("나: " + message);
             //}
             //catch (Exception ex)
             //{
             //    MessageBox.Show("메시지 전송 중 오류 발생: " + ex.Message);
-        //    }
+            //    }
+        }
+
+        private void CheckBTN()
+        {
+            byte temp = 0;
+            bool old = false;
+            for (int i = 0; i < 8; i++)
+            {
+                //0,1일 때는 Xaxis가
+                //4,5일 때는 Yaxis가 들어가야 한다.
+                iolib.GetInBit(12, i, ref temp);
+                if (old != (temp != '\0'))
+                {
+                    digitalOuptputs[i] = temp != '\0';
+                    if (i == 0 || i == 1 || i == 4 || i == 5)
+                    {
+                        MoveJog(temp != '\0', i / 4);
+                    }
+                    return;
+                }
+            }
+
+        }
+
+        /// <summary>
+        /// 이 함수는 왼쪽 네 개 버튼만
+        /// </summary>
+        /// <param name="isBTNpressed"></param>
+        /// <param name="axis"></param>
+        private void MoveJog(bool isBTNpressed, int axis)
+        {
+            Motion.PosCommand pos = new Motion.PosCommand();
+            pos.Axis = axis;
+            pos.Profile.Type = ProfileType.Trapezoidal;
+            Params tempParam = (settingParam.isSetting) ? settingParam : baseParam;
+            pos.Profile.Velocity = tempParam.velocity;
+            pos.Profile.Acc = tempParam.dccAcc;
+            pos.Profile.Dec = tempParam.dccAcc;
+            pos.Target = tempParam.target;
+
+
+            if (isBTNpressed)
+            {
+                DisplayError(cmlib.Motion.StartMov(pos));
+            }
+            else
+            {
+                MOTORSTOP(axis.ToString());
+            }
         }
 
         private void MOTORHOME(string num)
         {
-            //Config::HomeParam homeParam;
 
             ////원점 파라미터 로드
             //err = wmxlib_cm.config->GetHomeParam(0, &homeParam);
@@ -273,9 +387,6 @@ namespace FinalClientg
             //    printf("Failed to read home parameters. Error=%d (%s)\n", err, errString);
             //    goto exit;
             //}
-
-            //homeParam.homeType = Config::HomeType::HS; //홈 유형을 홈 스위치를 찾도록 설정
-
             ////원점 파라미터 작성
             //err = wmxlib_cm.config->SetHomeParam(0, &homeParam);
             //if (err != ErrorCode::None)
@@ -293,20 +404,30 @@ namespace FinalClientg
             //    printf("Failed to start homing. Error=%d (%s)\n", err, errString);
             //    goto exit;
             //}
+            if (alreadyComm)
+            {
+                Config.HomeParam homeParam = new Config.HomeParam();
+                DisplayError(cmlib.Config.GetHomeParam(Convert.ToInt32(num), ref homeParam));
+                homeParam.HomeType = Config.HomeType.HS; //홈 유형을 홈 스위치를 찾도록 설정
+                DisplayError(cmlib.Config.SetHomeParam(0, homeParam));
+                DisplayError(cmlib.Home.StartHome(0));
 
-            ret = cmlib.GetStatus(ref cmStatus);
-            if (num == "1")
-            {
-                ret = cmlib.Home.StartHome(AXIS0);
-            }
-            if (num == "2")
-            {
-                ret = cmlib.Home.StartHome(AXIS1);
+                ret = cmlib.GetStatus(ref cmStatus);
+                if (num == "1")
+                {
+                    ret = cmlib.Home.StartHome(AXIS0);
+                }
+                if (num == "2")
+                {
+                    ret = cmlib.Home.StartHome(AXIS1);
+                }
             }
         }
 
         private void MOTORSTOP(string num)
         {
+            DisplayError(cmlib.Motion.Stop(Convert.ToInt32(num)));
+
             //int err = wmxlib_cm.motion->Stop(0);
             //if (err != ErrorCode::None)
             //{
@@ -315,7 +436,5 @@ namespace FinalClientg
             //    goto exit;
             //}
         }
-
-      
     }
 }
