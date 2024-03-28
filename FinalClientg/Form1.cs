@@ -254,12 +254,13 @@ namespace FinalClientg
             }
             else
             {
-                alreadyComm = true;
                 wmxlib.CreateDevice("C:\\Program Files\\SoftServo\\WMX3", DeviceType.DeviceTypeNormal);
                 DisplayError(wmxlib.StartCommunication(WaitTimeMilliseconds));
                 cmlib = new CoreMotion(wmxlib);
                 SendMessage("COMMUN ON");
             }
+
+            alreadyComm = !alreadyComm; // 상태를 반전시킴
         }
 
         private void IOLED(string num, bool isOn)
