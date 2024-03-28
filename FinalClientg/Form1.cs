@@ -23,25 +23,11 @@ namespace FinalClientg
         JOG,
         HOMETYPE
     }
-    public struct Params
-    {
 
-        public bool isSetting;
-        public int velocity;
-        public int target;
-        
-
-        public Params(int velocity1, int target1)
-        {
-            velocity = velocity1;
-            target = target1;
-            isSetting = true;
-        }
-    }
     public partial class Form1 : Form
     {
-        Params baseParam;           //유저가 세팅하기 전 미리 기본값을 넣어둔 param
-        Params settingParam;            //유저가 세팅한 param (이게 비어있으면 baseParam을 사용하여 움직일 것)
+        Motion.PosCommand posCommX;            //유저가 세팅한 param (이게 비어있으면 baseParam을 사용하여 움직일 것)
+        Motion.PosCommand posCommY;            //유저가 세팅한 param (이게 비어있으면 baseParam을 사용하여 움직일 것)
 
         string pattern = @"\[(.*?)\]"; // 정규 표현식 패턴: [] 사이의 모든 문자열
         const int Xaxis = 2;
@@ -59,6 +45,8 @@ namespace FinalClientg
         bool alreadyComm = false;
         bool[] digitalOuptputs;
         bool ableComm = false;
+        int jogDirX = 1;
+        int jogDirY = 1;
 
         private const int bufferSize = 1024; //메시지를 받을 버퍼의 크기
         private TcpClient client; //편리한 클래스의 client를 생성
@@ -85,7 +73,20 @@ namespace FinalClientg
 
             digitalOuptputs = new bool[8];
 
-            baseParam = new Params(3600, 360);
+            posCommX = new Motion.PosCommand();
+            posCommX.Target = 3600;
+            posCommX.Profile.Velocity = 360;
+            posCommX.Profile.Acc = 360;
+            posCommX.Profile.Dec = 360;
+            posCommX.Profile.Type = ProfileType.Trapezoidal;
+              
+            posCommY = new Motion.PosCommand();
+            posCommY.Target = 3600;
+            posCommY.Profile.Velocity = 360;
+            posCommY.Profile.Acc = 360;
+            posCommY.Profile.Dec = 360;
+            posCommY.Profile.Type = ProfileType.Trapezoidal;
+
 
             Timer timer = new Timer();
             timer.Interval = 1000; // 1초마다
@@ -184,12 +185,13 @@ namespace FinalClientg
                     }
                     else if(dataReceived.Substring(0,2) == "CH")
                     {
-                        if (dataReceived[6] == 'H')
+                        int tempAxis = Convert.ToInt32(dataReceived[6]);
+                        if (dataReceived[7] == 'H')
                         {
                             Match match = Regex.Match(dataReceived, pattern);
                             if (match.Success)
                             {
-                                SetParam(SettingParams.PROFILETYPE, Convert.ToInt32(match.Groups[1].Value));
+                                SetParam(SettingParams.PROFILETYPE, Convert.ToInt32(match.Groups[1].Value), tempAxis);
                             }
                         }
                         else if (dataReceived[6] == 'V')
@@ -197,7 +199,7 @@ namespace FinalClientg
                             Match match = Regex.Match(dataReceived, pattern);
                             if (match.Success)
                             {
-                                SetParam(SettingParams.VELOCITY, Convert.ToInt32(match.Groups[1].Value));
+                                SetParam(SettingParams.VELOCITY, Convert.ToInt32(match.Groups[1].Value), tempAxis);
                             }
 
                         }
@@ -206,7 +208,7 @@ namespace FinalClientg
                             Match match = Regex.Match(dataReceived, pattern);
                             if (match.Success)
                             {
-                                SetParam(SettingParams.PROFILETYPE, Convert.ToInt32(match.Groups[1].Value));
+                                SetParam(SettingParams.PROFILETYPE, Convert.ToInt32(match.Groups[1].Value), tempAxis);
                             }
 
                         }
@@ -215,7 +217,14 @@ namespace FinalClientg
                             Match match = Regex.Match(dataReceived, pattern);
                             if (match.Success)
                             {
-                                SetParam(SettingParams.JOG, Convert.ToInt32(match.Groups[1].Value));
+                                if(tempAxis == 2)
+                                {
+                                    jogDirX = (Convert.ToInt32(match) < 0) ? -1 : 1 ;
+                                }
+                                else
+                                {
+                                    jogDirY = (Convert.ToInt32(match) < 0) ? -1 : 1;
+                                }
                             }
                         }
 
@@ -237,22 +246,75 @@ namespace FinalClientg
             }
         }
 
-        private void SetParam(SettingParams paramType, int num)
+        private void SetParam(SettingParams paramType, int num, int axis)
         {
             switch (paramType)
             {
                 case SettingParams.VELOCITY:
-                    settingParam.velocity = num;
-                    break;
-                case SettingParams.HOMETYPE:
-                    if(num == 0)
+                    if(axis == 2)
                     {
-                        
+                        posCommX.Profile.Velocity = num;
+                    }
+                    else
+                    {
+                        posCommY.Profile.Velocity = num;
                     }
                     break;
-                case SettingParams.JOG:
+                case SettingParams.HOMETYPE:
+                    Config.HomeParam homeParam = new Config.HomeParam();
+                    cmlib.Config.GetHomeParam(axis, ref homeParam);
+                    switch (num)
+                    {
+                        case 0:
+                            homeParam.HomeType = Config.HomeType.HS;
+                            break;
+                        case 1:
+                            homeParam.HomeType = Config.HomeType.HSHS;
+                            break;
+                        case 2:
+                            homeParam.HomeType = Config.HomeType.LS;
+                            break;
+                        default:
+                            break;
+                    }
+                    cmlib.Config.SetHomeParam(axis, homeParam);
                     break;
                 case SettingParams.PROFILETYPE:
+                    switch (num)
+                    {
+                        case 0:
+                            if(axis == 2)
+                            {
+                                posCommX.Profile.Type = ProfileType.Trapezoidal;
+                            }
+                            else
+                            {
+                                posCommY.Profile.Type = ProfileType.Trapezoidal;
+                            }
+                            break;
+                        case 1:
+                            if (axis == 2)
+                            {
+                                posCommX.Profile.Type = ProfileType.AdvancedS;
+                            }
+                            else
+                            {
+                                posCommY.Profile.Type = ProfileType.AdvancedS;
+                            }
+                            break;
+                        case 2:
+                            if (axis == 2)
+                            {
+                                posCommX.Profile.Type = ProfileType.JerkRatio;
+                            }
+                            else
+                            {
+                                posCommY.Profile.Type = ProfileType.JerkRatio;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
                     break;
 
             }
@@ -399,24 +461,15 @@ namespace FinalClientg
         /// <param name="axis"></param>
         private void MoveJog(bool isBTNpressed, int axis)
         {
-            Motion.PosCommand pos = new Motion.PosCommand();
-            pos.Axis = axis+2;
-
-            pos.Profile.Type = ProfileType.Trapezoidal;
-            Params tempParam = (settingParam.isSetting) ? settingParam : baseParam;
-            pos.Profile.Velocity = tempParam.velocity;
-            pos.Profile.Acc = tempParam.velocity * 10;
-            pos.Profile.Dec = tempParam.velocity * 10;
-            pos.Target = tempParam.target;
-
+            posCommX.Axis = axis+2;
 
             if (isBTNpressed)
             {
-                DisplayError(cmlib.Motion.StartMov(pos));
+                DisplayError(cmlib.Motion.StartMov(posCommX));
             }
             else
             {
-                MOTORSTOP(axis.ToString());
+                MOTORSTOP((axis+2).ToString());
             }
         }
 
