@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WMX3ApiCLR;
@@ -15,16 +16,24 @@ using WMX3ApiCLR;
 
 namespace FinalClientg
 {
+    public enum SettingParams
+    {
+        VELOCITY =0,
+        PROFILETYPE,
+        JOG,
+        HOMETYPE
+    }
     public struct Params
     {
+
         public bool isSetting;
         public int velocity;
-        public int dccAcc;
         public int target;
-        public Params(int velocity1, int dccAcc1, int target1)
+        
+
+        public Params(int velocity1, int target1)
         {
             velocity = velocity1;
-            dccAcc = dccAcc1;
             target = target1;
             isSetting = true;
         }
@@ -34,7 +43,7 @@ namespace FinalClientg
         Params baseParam;           //유저가 세팅하기 전 미리 기본값을 넣어둔 param
         Params settingParam;            //유저가 세팅한 param (이게 비어있으면 baseParam을 사용하여 움직일 것)
 
-
+        string pattern = @"\[(.*?)\]"; // 정규 표현식 패턴: [] 사이의 모든 문자열
         const int Xaxis = 2;
         const int Yaxis = 3;
 
@@ -76,7 +85,7 @@ namespace FinalClientg
 
             digitalOuptputs = new bool[8];
 
-            baseParam = new Params(360, 3600, 360);
+            baseParam = new Params(3600, 360);
 
             Timer timer = new Timer();
             timer.Interval = 1000; // 1초마다
@@ -166,13 +175,51 @@ namespace FinalClientg
                         MOTORSERVOON1(dataReceived.Substring(10, 1));
                     }
                     else if (dataReceived.Substring(5, 2) == "ST")
-                        {
-                            MOTORSTOP(dataReceived.Substring(9, 1));
-                        }
+                    {
+                        MOTORSTOP(dataReceived.Substring(9, 1));
+                    }
                     else if (dataReceived.Substring(5, 2) == "HO")
+                    {
+                        MOTORHOME(dataReceived.Substring(10, 1));
+                    }
+                    else if(dataReceived.Substring(0,2) == "CH")
+                    {
+                        if (dataReceived[6] == 'H')
                         {
-                            MOTORHOME(dataReceived.Substring(10, 1));
+                            Match match = Regex.Match(dataReceived, pattern);
+                            if (match.Success)
+                            {
+                                SetParam(SettingParams.PROFILETYPE, Convert.ToInt32(match.Groups[1].Value));
+                            }
                         }
+                        else if (dataReceived[6] == 'V')
+                        {
+                            Match match = Regex.Match(dataReceived, pattern);
+                            if (match.Success)
+                            {
+                                SetParam(SettingParams.VELOCITY, Convert.ToInt32(match.Groups[1].Value));
+                            }
+
+                        }
+                        else if (dataReceived[6] == 'P')
+                        {
+                            Match match = Regex.Match(dataReceived, pattern);
+                            if (match.Success)
+                            {
+                                SetParam(SettingParams.PROFILETYPE, Convert.ToInt32(match.Groups[1].Value));
+                            }
+
+                        }
+                        else if (dataReceived[6] == 'J')
+                        {
+                            Match match = Regex.Match(dataReceived, pattern);
+                            if (match.Success)
+                            {
+                                SetParam(SettingParams.JOG, Convert.ToInt32(match.Groups[1].Value));
+                            }
+                        }
+
+                    }
 
                     // 다시 비동기로 데이터 수신 대기
                     stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(OnDataReceived), null);   // OnDataReceived의 재귀함수 형태로 만들어서 메세지를 계속 받을 수 있도록 함
@@ -190,6 +237,26 @@ namespace FinalClientg
             }
         }
 
+        private void SetParam(SettingParams paramType, int num)
+        {
+            switch (paramType)
+            {
+                case SettingParams.VELOCITY:
+                    settingParam.velocity = num;
+                    break;
+                case SettingParams.HOMETYPE:
+                    if(num == 0)
+                    {
+                        
+                    }
+                    break;
+                case SettingParams.JOG:
+                    break;
+                case SettingParams.PROFILETYPE:
+                    break;
+
+            }
+        }
 
         private void SendMessage(string message)
         {
@@ -226,6 +293,9 @@ namespace FinalClientg
                 DisplayError(wmxlib.StartCommunication(WaitTimeMilliseconds));
                 cmlib = new CoreMotion(wmxlib);
                 SendMessage("COMMU ON");
+                cmlib.AxisControl.SetServoOn(Xaxis, 1);
+                cmlib.AxisControl.SetServoOn(Yaxis, 1);
+                cmlib.AxisControl.SetServoOn(0, 1);
             }
 
             alreadyComm = !alreadyComm;
@@ -248,6 +318,7 @@ namespace FinalClientg
                 if (!cmStatus.AxesStatus[AXIS0].ServoOn && !cmStatus.AxesStatus[AXIS1].ServoOn)
                 {
                     cmlib.AxisControl.SetServoOn(AXIS0, SERVOON);
+                    cmlib.Config.SetGearRatio(Convert.ToInt32(num), 8388608, 360);
                 }
                 else
                 {
@@ -261,6 +332,7 @@ namespace FinalClientg
                 if (!cmStatus.AxesStatus[AXIS0].ServoOn && !cmStatus.AxesStatus[AXIS1].ServoOn)
                 {
                     cmlib.AxisControl.SetServoOn(AXIS1, SERVOON);
+                    cmlib.Config.SetGearRatio(Convert.ToInt32(num), 8388608, 360);
                 }
                 else
                 {
@@ -270,18 +342,18 @@ namespace FinalClientg
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
-            //if (alreadyComm)
-            //{
+            if (alreadyComm)
+            {
 
-            //    DisplayError(cmlib.GetStatus(ref cmStatus));
-            //    string message = "X : ";
-            //    message += cmStatus.AxesStatus[Xaxis].ActualPos.ToString("0.00");
-            //    message += " ,Y : ";
-            //    message += cmStatus.AxesStatus[Yaxis].ActualPos.ToString("0.00");
-            //    SendMessage(message);
-            //    CheckBTN();
+                //DisplayError(cmlib.GetStatus(ref cmStatus));
+                //string message = "X : ";
+                //message += cmStatus.AxesStatus[Xaxis].ActualPos.ToString("0.00");
+                //message += " ,Y : ";
+                //message += cmStatus.AxesStatus[Yaxis].ActualPos.ToString("0.00");
+                //SendMessage(message);
+                CheckBTN();
 
-            //}
+            }
             //-----------------------
             // try
             //{
@@ -300,11 +372,13 @@ namespace FinalClientg
         {
             byte temp = 0;
             bool old = false;
+            
             for (int i = 0; i < 8; i++)
             {
+                old = digitalOuptputs[i];
                 //0,1일 때는 Xaxis가
                 //4,5일 때는 Yaxis가 들어가야 한다.
-                iolib.GetInBit(12, i, ref temp);
+                iolib.GetInBit(20, i, ref temp);
                 if (old != (temp != '\0'))
                 {
                     digitalOuptputs[i] = temp != '\0';
@@ -326,12 +400,13 @@ namespace FinalClientg
         private void MoveJog(bool isBTNpressed, int axis)
         {
             Motion.PosCommand pos = new Motion.PosCommand();
-            pos.Axis = axis;
+            pos.Axis = axis+2;
+
             pos.Profile.Type = ProfileType.Trapezoidal;
             Params tempParam = (settingParam.isSetting) ? settingParam : baseParam;
             pos.Profile.Velocity = tempParam.velocity;
-            pos.Profile.Acc = tempParam.dccAcc;
-            pos.Profile.Dec = tempParam.dccAcc;
+            pos.Profile.Acc = tempParam.velocity * 10;
+            pos.Profile.Dec = tempParam.velocity * 10;
             pos.Target = tempParam.target;
 
 
