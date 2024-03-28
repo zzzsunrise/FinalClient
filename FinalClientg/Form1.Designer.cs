@@ -48,7 +48,7 @@
             this.text_IP.Name = "text_IP";
             this.text_IP.Size = new System.Drawing.Size(144, 21);
             this.text_IP.TabIndex = 0;
-            this.text_IP.Text = "172.30.1.64";
+            this.text_IP.Text = "172.30.1.39";
             // 
             // label1
             // 
