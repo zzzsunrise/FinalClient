@@ -82,8 +82,6 @@ namespace FinalClientg
             timer.Interval = 1000; // 1초마다
             timer.Tick += timer1_Tick;
             timer.Start();
-
-
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -105,7 +103,7 @@ namespace FinalClientg
                 // TcpClient 객체 생성 및 서버에 연결
                 client = new TcpClient();      //TcpClient client 객체 생성해서 저장
                 client.Connect(text_IP.Text, Convert.ToInt32(text_PORT.Text));  // Convert.ToInt32= int.Parse : string을 int로 변환
-                ListBox_MSG.Items.Add("접속완료");
+                //ListBox_MSG.Items.Add("접속완료");
 
                 // 네트워크 스트림 얻기
                 stream = client.GetStream();      //stream : client-server와의 연결(가상 선이라고 생각)
@@ -127,7 +125,7 @@ namespace FinalClientg
                 {
                     stream.Close(); // 네트워크 스트림 닫기
                     client.Close(); // 클라이언트 소켓 닫기
-                    ListBox_MSG.Items.Add("연결 종료");
+                   // ListBox_MSG.Items.Add("연결 종료");
 
                     // 연결 버튼 다시 활성화
                     BTN_CONNECT.Enabled = true;
@@ -155,11 +153,11 @@ namespace FinalClientg
                     // 받은 메시지를 UI에 표시하기 위해 Invoke 사용
                     Invoke(new Action(() => ListBox_MSG.Items.Add(dataReceived)));
 
-                    if (dataReceived == "WMX3START")
+                    if (dataReceived == "WMX3COMUICATION")
                     {
                         Init();
                     }
-                    if (dataReceived.Substring(0, 2) == "DO")
+                    else if (dataReceived.Substring(0, 2) == "DO")
                     {
                         IOLED(dataReceived.Substring(2, 2), dataReceived[5] == 'N');
                     }
@@ -219,8 +217,7 @@ namespace FinalClientg
         {
             if (alreadyComm)
             {
-                //wmxlib.StopCommunication();
-                //DisplayError(wmxlib.StopCommunication(WaitTimeMilliseconds));
+                DisplayError(wmxlib.StopCommunication());
                 SendMessage("COMMU OFF");
             }
             else
