@@ -155,31 +155,26 @@ namespace FinalClientg
                     // 받은 메시지를 UI에 표시하기 위해 Invoke 사용
                     Invoke(new Action(() => ListBox_MSG.Items.Add(dataReceived)));
 
-                    if (dataReceived == "init")
+                    if (dataReceived == "WMX3START")
                     {
                         Init();
                     }
-
                     if (dataReceived.Substring(0, 2) == "DO")
                     {
                         IOLED(dataReceived.Substring(2, 2), dataReceived[5] == 'N');
                     }
-                    if (dataReceived.Substring(5, 2) == "SE")
+                    else if (dataReceived.Substring(5, 2) == "SE")
                     {
                         MOTORSERVOON1(dataReceived.Substring(10, 1));
                     }
-                    if (dataReceived.Length > 7)
-                    {
-                        if (dataReceived.Substring(5, 2) == "ST")
+                    else if (dataReceived.Substring(5, 2) == "ST")
                         {
                             MOTORSTOP(dataReceived.Substring(9, 1));
                         }
-                        else if (dataReceived.Substring(5, 2) == "HO")
+                    else if (dataReceived.Substring(5, 2) == "HO")
                         {
                             MOTORHOME(dataReceived.Substring(10, 1));
                         }
-
-                    }
 
                     // 다시 비동기로 데이터 수신 대기
                     stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(OnDataReceived), null);   // OnDataReceived의 재귀함수 형태로 만들어서 메세지를 계속 받을 수 있도록 함
@@ -222,45 +217,21 @@ namespace FinalClientg
 
         private void Init()
         {
-            //if (!alreadyComm)
-            //{
-            //    alreadyComm = true;
-            //    wmxlib.CreateDevice("C:\\Program Files\\SoftServo\\WMX3", DeviceType.DeviceTypeNormal);
-            //}
-            //else
-            //{
-            //    if (!ableComm)
-            //    {
-            //        DisplayError(wmxlib.StartCommunication(WaitTimeMilliseconds));
-            //        ableComm = true;
-            //        cmlib = new CoreMotion(wmxlib);
-            //        SendMessage("COMMU ON");
-            //    }
-            //    else
-            //    {
-            //        DisplayError(wmxlib.StopCommunication());
-            //        ableComm = false;
-            //        cmlib = new CoreMotion(wmxlib);
-            //        SendMessage("COMMU OFF");
-            //    }
-            //}
-
-
             if (alreadyComm)
             {
-                wmxlib.StopCommunication();
-                SendMessage("COMMUN OFF");
-
+                //wmxlib.StopCommunication();
+                //DisplayError(wmxlib.StopCommunication(WaitTimeMilliseconds));
+                SendMessage("COMMU OFF");
             }
             else
             {
                 wmxlib.CreateDevice("C:\\Program Files\\SoftServo\\WMX3", DeviceType.DeviceTypeNormal);
                 DisplayError(wmxlib.StartCommunication(WaitTimeMilliseconds));
                 cmlib = new CoreMotion(wmxlib);
-                SendMessage("COMMUN ON");
+                SendMessage("COMMU ON");
             }
 
-            alreadyComm = !alreadyComm; // 상태를 반전시킴
+            alreadyComm = !alreadyComm;
         }
 
         private void IOLED(string num, bool isOn)
@@ -302,18 +273,18 @@ namespace FinalClientg
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (alreadyComm)
-            {
+            //if (alreadyComm)
+            //{
 
-                DisplayError(cmlib.GetStatus(ref cmStatus));
-                string message = "X : ";
-                message += cmStatus.AxesStatus[Xaxis].ActualPos.ToString("0.00");
-                message += " ,Y : ";
-                message += cmStatus.AxesStatus[Yaxis].ActualPos.ToString("0.00");
-                SendMessage(message);
-                CheckBTN();
+            //    DisplayError(cmlib.GetStatus(ref cmStatus));
+            //    string message = "X : ";
+            //    message += cmStatus.AxesStatus[Xaxis].ActualPos.ToString("0.00");
+            //    message += " ,Y : ";
+            //    message += cmStatus.AxesStatus[Yaxis].ActualPos.ToString("0.00");
+            //    SendMessage(message);
+            //    CheckBTN();
 
-            }
+            //}
             //-----------------------
             // try
             //{
