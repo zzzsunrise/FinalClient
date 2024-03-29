@@ -16,6 +16,7 @@ using WMX3ApiCLR;
 
 namespace FinalClientg
 {
+    #region
     public enum SettingParams
     {
         VELOCITY =0,
@@ -23,7 +24,7 @@ namespace FinalClientg
         JOG,
         HOMETYPE
     }
-
+    #endregion
     public partial class Form1 : Form
     {
         Motion.PosCommand posCommX;            //유저가 세팅한 param (이게 비어있으면 baseParam을 사용하여 움직일 것)
@@ -46,7 +47,29 @@ namespace FinalClientg
         bool[] digitalOuptputs;
         bool ableComm = false;
         int jogDirX = 1;
+        int JogDirX
+        {
+            set
+            {
+                if(value != jogDirX)
+                {
+                    jogDirX = value;
+                    posCommX.Target *= -1;
+                }
+            }
+        }
         int jogDirY = 1;
+        int JogDirY
+        {
+            set
+            {
+                if (value != jogDirY)
+                {
+                    jogDirY = value;
+                    posCommY.Target *= -1;
+                }
+            }
+        }
 
         private const int bufferSize = 1024; //메시지를 받을 버퍼의 크기
         private TcpClient client; //편리한 클래스의 client를 생성
@@ -60,6 +83,9 @@ namespace FinalClientg
         CoreMotion cmlib;
         CoreMotionStatus cmStatus;
 
+        double oldTargetX = 0;
+        double oldTargetY = 0;
+        
         public Form1()
         {
             InitializeComponent();
@@ -74,6 +100,7 @@ namespace FinalClientg
             digitalOuptputs = new bool[8];
 
             posCommX = new Motion.PosCommand();
+            posCommX.Axis = 2;
             posCommX.Target = 3600;
             posCommX.Profile.Velocity = 360;
             posCommX.Profile.Acc = 360;
@@ -81,6 +108,7 @@ namespace FinalClientg
             posCommX.Profile.Type = ProfileType.Trapezoidal;
               
             posCommY = new Motion.PosCommand();
+            posCommY.Axis = 3;
             posCommY.Target = 3600;
             posCommY.Profile.Velocity = 360;
             posCommY.Profile.Acc = 360;
@@ -194,7 +222,7 @@ namespace FinalClientg
                                 SetParam(SettingParams.PROFILETYPE, Convert.ToInt32(match.Groups[1].Value), tempAxis);
                             }
                         }
-                        else if (dataReceived[6] == 'V')
+                        else if (dataReceived[7] == 'V')
                         {
                             Match match = Regex.Match(dataReceived, pattern);
                             if (match.Success)
@@ -203,7 +231,7 @@ namespace FinalClientg
                             }
 
                         }
-                        else if (dataReceived[6] == 'P')
+                        else if (dataReceived[7] == 'P')
                         {
                             Match match = Regex.Match(dataReceived, pattern);
                             if (match.Success)
@@ -212,18 +240,18 @@ namespace FinalClientg
                             }
 
                         }
-                        else if (dataReceived[6] == 'J')
+                        else if (dataReceived[7] == 'J')
                         {
                             Match match = Regex.Match(dataReceived, pattern);
                             if (match.Success)
                             {
                                 if(tempAxis == 2)
                                 {
-                                    jogDirX = (Convert.ToInt32(match) < 0) ? -1 : 1 ;
+                                    JogDirX = (Convert.ToInt32(match) < 0) ? -1 : 1 ;
                                 }
                                 else
                                 {
-                                    jogDirY = (Convert.ToInt32(match) < 0) ? -1 : 1;
+                                    JogDirY = (Convert.ToInt32(match) < 0) ? -1 : 1;
                                 }
                             }
                         }
@@ -446,7 +474,7 @@ namespace FinalClientg
                     digitalOuptputs[i] = temp != '\0';
                     if (i == 0 || i == 1 || i == 4 || i == 5)
                     {
-                        MoveJog(temp != '\0', i / 4);
+                        MoveJog(temp != '\0', i / 4, i);
                     }
                     return;
                 }
@@ -459,16 +487,58 @@ namespace FinalClientg
         /// </summary>
         /// <param name="isBTNpressed"></param>
         /// <param name="axis"></param>
-        private void MoveJog(bool isBTNpressed, int axis)
+        private void MoveJog(bool isBTNpressed, int axis, int btn)
         {
-            posCommX.Axis = axis+2;
-
-            if (isBTNpressed)
+            if(btn > 3)
             {
-                DisplayError(cmlib.Motion.StartMov(posCommX));
+                oldTargetY = posCommY.Target;
             }
             else
             {
+                oldTargetX = posCommX.Target;
+
+            }
+            if (isBTNpressed)
+            {
+                switch (btn)
+                {
+                    case 0:
+                        posCommX.Target = -Math.Abs(oldTargetX);
+                        break;
+                    case 1:
+                        posCommX.Target = Math.Abs(oldTargetX);
+                        break;
+                    case 4:
+                        posCommY.Target = -Math.Abs(oldTargetY);
+                        break;
+                    case 5:
+                        posCommY.Target = Math.Abs(oldTargetY);
+                        break;
+                    default:
+                        break;
+                }
+
+                if (btn < 3)
+                {
+                    DisplayError(cmlib.Motion.StartMov(posCommX));
+
+                }
+                else
+                {
+                    DisplayError(cmlib.Motion.StartMov(posCommY));
+
+                }
+            }
+            else
+            {
+                if(btn < 3)
+                {
+                    posCommX.Target = oldTargetX;
+                }
+                else
+                {
+                    posCommY.Target = oldTargetY;
+                }
                 MOTORSTOP((axis+2).ToString());
             }
         }
