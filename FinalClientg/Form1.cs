@@ -213,45 +213,44 @@ namespace FinalClientg
                     }
                     else if(dataReceived.Substring(0,2) == "CH")
                     {
-                        int tempAxis = Convert.ToInt32(dataReceived[6]);
+                        int tempAxis = 2 + Convert.ToInt32(dataReceived[6] =='3');
+                        Match match = Regex.Match(dataReceived, pattern);
+                        int value = Convert.ToInt32(match.Groups[1].Value);
                         if (dataReceived[7] == 'H')
                         {
-                            Match match = Regex.Match(dataReceived, pattern);
+                            
                             if (match.Success)
                             {
-                                SetParam(SettingParams.PROFILETYPE, Convert.ToInt32(match.Groups[1].Value), tempAxis);
+                                SetParam(SettingParams.PROFILETYPE, value, tempAxis);
                             }
                         }
                         else if (dataReceived[7] == 'V')
                         {
-                            Match match = Regex.Match(dataReceived, pattern);
                             if (match.Success)
                             {
-                                SetParam(SettingParams.VELOCITY, Convert.ToInt32(match.Groups[1].Value), tempAxis);
+                                SetParam(SettingParams.VELOCITY, value, tempAxis);
                             }
 
                         }
                         else if (dataReceived[7] == 'P')
                         {
-                            Match match = Regex.Match(dataReceived, pattern);
                             if (match.Success)
                             {
-                                SetParam(SettingParams.PROFILETYPE, Convert.ToInt32(match.Groups[1].Value), tempAxis);
+                                SetParam(SettingParams.PROFILETYPE, value, tempAxis);
                             }
 
                         }
                         else if (dataReceived[7] == 'J')
                         {
-                            Match match = Regex.Match(dataReceived, pattern);
                             if (match.Success)
                             {
                                 if(tempAxis == 2)
                                 {
-                                    JogDirX = (Convert.ToInt32(match) == 0) ? -1 : 1;
+                                    JogDirX = (value == 0) ? -1 : 1;
                                 }
                                 else
                                 {
-                                    JogDirY = (Convert.ToInt32(match) == 0) ? -1 : 1;
+                                    JogDirY = (value == 0) ? -1 : 1;
                                 }
                             }
                         }
