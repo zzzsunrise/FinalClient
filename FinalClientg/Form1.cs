@@ -247,11 +247,11 @@ namespace FinalClientg
                             {
                                 if(tempAxis == 2)
                                 {
-                                    JogDirX = (Convert.ToInt32(match) < 0) ? -1 : 1 ;
+                                    JogDirX = (Convert.ToInt32(match) == 0) ? -1 : 1;
                                 }
                                 else
                                 {
-                                    JogDirY = (Convert.ToInt32(match) < 0) ? -1 : 1;
+                                    JogDirY = (Convert.ToInt32(match) == 0) ? -1 : 1;
                                 }
                             }
                         }
@@ -435,27 +435,15 @@ namespace FinalClientg
             if (alreadyComm)
             {
 
-                //DisplayError(cmlib.GetStatus(ref cmStatus));
-                //string message = "X : ";
-                //message += cmStatus.AxesStatus[Xaxis].ActualPos.ToString("0.00");
-                //message += " ,Y : ";
-                //message += cmStatus.AxesStatus[Yaxis].ActualPos.ToString("0.00");
-                //SendMessage(message);
+                DisplayError(cmlib.GetStatus(ref cmStatus));
+                string message = "X:";
+                message += cmStatus.AxesStatus[Xaxis].ActualPos.ToString("0.00");
+                message += "Y:";
+                message += cmStatus.AxesStatus[Yaxis].ActualPos.ToString("0.00");
+                SendMessage(message);
                 CheckBTN();
 
             }
-            //-----------------------
-            // try
-            //{
-            //    // 메시지 생성
-            //    // 메시지를 바이트 배열로 변환하여 서버로 전송
-            //    // 전송한 메시지를 리스트박스에 표시
-            //    ListBox_MSG.Items.Add("나: " + message);
-            //}
-            //catch (Exception ex)
-            //{
-            //    MessageBox.Show("메시지 전송 중 오류 발생: " + ex.Message);
-            //    }
         }
 
         private void CheckBTN()
