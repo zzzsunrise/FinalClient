@@ -438,7 +438,8 @@ namespace FinalClientg
                 DisplayError(cmlib.GetStatus(ref cmStatus));
                 string message = "X:";
                 message += cmStatus.AxesStatus[Xaxis].ActualPos.ToString("0.00");
-                message += "Y:";
+                SendMessage(message);
+                message = "Y:";
                 message += cmStatus.AxesStatus[Yaxis].ActualPos.ToString("0.00");
                 SendMessage(message);
                 CheckBTN();
