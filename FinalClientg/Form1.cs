@@ -35,8 +35,8 @@ namespace FinalClientg
         const int Yaxis = 3;
 
         const int WaitTimeMilliseconds = 10000;
-        const int AXIS0 = 0;
-        const int AXIS1 = 1;
+        const int AXIS0 = 2;
+        const int AXIS1 = 3;
 
         const int SERVOON = 1;
         const int SERVOOFF = 0;
@@ -183,6 +183,7 @@ namespace FinalClientg
         {
             try
             {
+               
                 int bytesRead = stream.EndRead(ar); // stream은 데이터를 읽는 스트림
                 if (bytesRead > 0)
                 {
@@ -211,54 +212,43 @@ namespace FinalClientg
                     {
                         MOTORHOME(dataReceived.Substring(10, 1));
                     }
-                    else if(dataReceived.Substring(0,2) == "CH")
+                    if (dataReceived.Substring(0, 2) == "CH")
                     {
-                        int tempAxis = 2 + Convert.ToInt32(dataReceived[6] =='3');
+                        int tempAxis = 2 + Convert.ToInt32(dataReceived[6] == '3');
                         Match match = Regex.Match(dataReceived, pattern);
                         int value = Convert.ToInt32(match.Groups[1].Value);
-                        if (dataReceived[7] == 'H')
+                        if (dataReceived[7] == 'V' && match.Success)
                         {
-                            
-                            if (match.Success)
+                            SetParam(SettingParams.VELOCITY, value, tempAxis);
+                        }
+                        else if (dataReceived[7] == 'H' && match.Success)
+                        {
+                            SetParam(SettingParams.PROFILETYPE, value, tempAxis);
+                        }
+                        else if (dataReceived[7] == 'P' && match.Success)
+                        {
+                            SetParam(SettingParams.PROFILETYPE, value, tempAxis);
+                        }
+                        else if ( dataReceived[7] == 'P' && match.Success)
+                        {
+                            SetParam(SettingParams.PROFILETYPE, value, tempAxis);
+                        }
+                        else if (dataReceived[7] == 'J' && match.Success)
+                        {
+                            if (tempAxis == 2)
                             {
-                                SetParam(SettingParams.PROFILETYPE, value, tempAxis);
+                                JogDirX = (value == 0) ? -1 : 1;
+                            }
+                            else
+                            {
+                                JogDirY = (value == 0) ? -1 : 1;
                             }
                         }
-                        else if (dataReceived[7] == 'V')
-                        {
-                            if (match.Success)
-                            {
-                                SetParam(SettingParams.VELOCITY, value, tempAxis);
-                            }
-
-                        }
-                        else if (dataReceived[7] == 'P')
-                        {
-                            if (match.Success)
-                            {
-                                SetParam(SettingParams.PROFILETYPE, value, tempAxis);
-                            }
-
-                        }
-                        else if (dataReceived[7] == 'J')
-                        {
-                            if (match.Success)
-                            {
-                                if(tempAxis == 2)
-                                {
-                                    JogDirX = (value == 0) ? -1 : 1;
-                                }
-                                else
-                                {
-                                    JogDirY = (value == 0) ? -1 : 1;
-                                }
-                            }
-                        }
-
                     }
+                   
 
-                    // 다시 비동기로 데이터 수신 대기
-                    stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(OnDataReceived), null);   // OnDataReceived의 재귀함수 형태로 만들어서 메세지를 계속 받을 수 있도록 함
+            // 다시 비동기로 데이터 수신 대기
+                        stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(OnDataReceived), null);   // OnDataReceived의 재귀함수 형태로 만들어서 메세지를 계속 받을 수 있도록 함
                 }
                 else
                 {
@@ -272,6 +262,7 @@ namespace FinalClientg
                 MessageBox.Show("데이터 수신 중 오류 발생: " + ex.Message);
             }
         }
+
 
         private void SetParam(SettingParams paramType, int num, int axis)
         {
@@ -382,9 +373,9 @@ namespace FinalClientg
                 DisplayError(wmxlib.StartCommunication(WaitTimeMilliseconds));
                 cmlib = new CoreMotion(wmxlib);
                 SendMessage("COMMU ON");
-                cmlib.AxisControl.SetServoOn(Xaxis, 1);
-                cmlib.AxisControl.SetServoOn(Yaxis, 1);
-                cmlib.AxisControl.SetServoOn(0, 1);
+                //cmlib.AxisControl.SetServoOn(Xaxis, 1);
+                //cmlib.AxisControl.SetServoOn(Yaxis, 1);
+                //cmlib.AxisControl.SetServoOn(0, 1);
             }
 
             alreadyComm = !alreadyComm;
@@ -400,28 +391,28 @@ namespace FinalClientg
         private void MOTORSERVOON1(string num)
         {
 
-            if (num == "1")
-            {
-                ret = cmlib.GetStatus(ref cmStatus);
-
-                if (!cmStatus.AxesStatus[AXIS0].ServoOn && !cmStatus.AxesStatus[AXIS1].ServoOn)
-                {
-                    cmlib.AxisControl.SetServoOn(AXIS0, SERVOON);
-                    cmlib.Config.SetGearRatio(Convert.ToInt32(num), 8388608, 360);
-                }
-                else
-                {
-                    cmlib.AxisControl.SetServoOn(AXIS0, SERVOOFF);
-                }
-            }
             if (num == "2")
             {
                 ret = cmlib.GetStatus(ref cmStatus);
 
                 if (!cmStatus.AxesStatus[AXIS0].ServoOn && !cmStatus.AxesStatus[AXIS1].ServoOn)
                 {
+                    cmlib.AxisControl.SetServoOn(AXIS0, SERVOON);
+                    cmlib.Config.SetGearRatio(Convert.ToInt32(num), 38364, 360);
+                }
+                else
+                {
+                    cmlib.AxisControl.SetServoOn(AXIS0, SERVOOFF);
+                }
+            }
+            if (num == "3")
+            {
+                ret = cmlib.GetStatus(ref cmStatus);
+
+                if (!cmStatus.AxesStatus[AXIS0].ServoOn && !cmStatus.AxesStatus[AXIS1].ServoOn)
+                {
                     cmlib.AxisControl.SetServoOn(AXIS1, SERVOON);
-                    cmlib.Config.SetGearRatio(Convert.ToInt32(num), 8388608, 360);
+                    cmlib.Config.SetGearRatio(Convert.ToInt32(num), 38364, 360);
                 }
                 else
                 {
