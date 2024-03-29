@@ -8,6 +8,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WMX3ApiCLR;
@@ -33,6 +34,8 @@ namespace FinalClientg
         string pattern = @"\[(.*?)\]"; // 정규 표현식 패턴: [] 사이의 모든 문자열
         const int Xaxis = 2;
         const int Yaxis = 3;
+
+        bool isNet = false;
 
         const int WaitTimeMilliseconds = 10000;
         const int AXIS0 = 2;
@@ -116,7 +119,7 @@ namespace FinalClientg
             posCommY.Profile.Type = ProfileType.Trapezoidal;
 
 
-            Timer timer = new Timer();
+            System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
             timer.Interval = 1000; // 1초마다
             timer.Tick += timer1_Tick;
             timer.Start();
@@ -129,6 +132,7 @@ namespace FinalClientg
 
         private void BTN_CONNECT_Click(object sender, EventArgs e)
         {
+            isNet = true;
             try   //try 구문 안에 오류 목록생기면 -> catch로 이동 -> Exception의 Message proprity에서 무슨 오류인지 알려줌 
             {
                 // 이미 연결되어 있는 경우 연결 중복 방지
@@ -156,6 +160,7 @@ namespace FinalClientg
         }
         private void BTN_DISCONNECT_Click(object sender, EventArgs e)
         {
+            isNet = false;
             try
             {
                 // 클라이언트가 연결되어 있으면 연결 종료
@@ -210,7 +215,7 @@ namespace FinalClientg
                     }
                     else if (dataReceived.Substring(5, 2) == "HO")
                     {
-                        MOTORHOME(dataReceived.Substring(10, 1));
+                        MOTORHOME(Convert.ToInt32( dataReceived.Substring(10, 1)));
                     }
                     if (dataReceived.Substring(0, 2) == "CH")
                     {
@@ -223,17 +228,13 @@ namespace FinalClientg
                         }
                         else if (dataReceived[7] == 'H' && match.Success)
                         {
-                            SetParam(SettingParams.PROFILETYPE, value, tempAxis);
+                            SetParam(SettingParams.HOMETYPE, value, tempAxis);
                         }
                         else if (dataReceived[7] == 'P' && match.Success)
                         {
                             SetParam(SettingParams.PROFILETYPE, value, tempAxis);
                         }
-                        else if ( dataReceived[7] == 'P' && match.Success)
-                        {
-                            SetParam(SettingParams.PROFILETYPE, value, tempAxis);
-                        }
-                        else if (dataReceived[7] == 'J' && match.Success)
+                        else if ( dataReceived[7] == 'J' && match.Success)
                         {
                             if (tempAxis == 2)
                             {
@@ -296,6 +297,7 @@ namespace FinalClientg
                             break;
                     }
                     cmlib.Config.SetHomeParam(axis, homeParam);
+                    MOTORHOME(axis);
                     break;
                 case SettingParams.PROFILETYPE:
                     switch (num)
@@ -344,6 +346,7 @@ namespace FinalClientg
             {
                 byte[] data = Encoding.UTF8.GetBytes(message);
                 stream.Write(data, 0, data.Length);
+                //Thread.Sleep(1000);
             }
             catch (Exception ex)
             {
@@ -395,7 +398,7 @@ namespace FinalClientg
             {
                 ret = cmlib.GetStatus(ref cmStatus);
 
-                if (!cmStatus.AxesStatus[AXIS0].ServoOn && !cmStatus.AxesStatus[AXIS1].ServoOn)
+                if (!cmStatus.AxesStatus[AXIS0].ServoOn)
                 {
                     cmlib.AxisControl.SetServoOn(AXIS0, SERVOON);
                     cmlib.Config.SetGearRatio(Convert.ToInt32(num), 38364, 360);
@@ -409,7 +412,7 @@ namespace FinalClientg
             {
                 ret = cmlib.GetStatus(ref cmStatus);
 
-                if (!cmStatus.AxesStatus[AXIS0].ServoOn && !cmStatus.AxesStatus[AXIS1].ServoOn)
+                if (!cmStatus.AxesStatus[AXIS1].ServoOn)
                 {
                     cmlib.AxisControl.SetServoOn(AXIS1, SERVOON);
                     cmlib.Config.SetGearRatio(Convert.ToInt32(num), 38364, 360);
@@ -422,7 +425,7 @@ namespace FinalClientg
         }
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (alreadyComm)
+            if (alreadyComm && isNet)
             {
 
                 DisplayError(cmlib.GetStatus(ref cmStatus));
@@ -522,48 +525,26 @@ namespace FinalClientg
             }
         }
 
-        private void MOTORHOME(string num)
+        private void MOTORHOME(int num)
         {
 
             ////원점 파라미터 로드
             //err = wmxlib_cm.config->GetHomeParam(0, &homeParam);
-            //if (err != ErrorCode::None)
-            //{
-            //    wmxlib_cm.ErrorToString(err, errString, sizeof(errString));
-            //    printf("Failed to read home parameters. Error=%d (%s)\n", err, errString);
-            //    goto exit;
-            //}
+
             ////원점 파라미터 작성
             //err = wmxlib_cm.config->SetHomeParam(0, &homeParam);
-            //if (err != ErrorCode::None)
-            //{
-            //    wmxlib_cm.ErrorToString(err, errString, sizeof(errString));
-            //    printf("Failed to write home parameters. Error=%d (%s)\n", err, errString);
-            //    goto exit;
-            //}
 
             ////원점 복귀 동작 시작
             //err = wmxlib_cm.home->StartHome(0);
-            //if (err != ErrorCode::None)
-            //{
-            //    wmxlib_cm.ErrorToString(err, errString, sizeof(errString));
-            //    printf("Failed to start homing. Error=%d (%s)\n", err, errString);
-            //    goto exit;
-            //}
+
             if (alreadyComm)
             {
-                Config.HomeParam homeParam = new Config.HomeParam();
-                DisplayError(cmlib.Config.GetHomeParam(Convert.ToInt32(num), ref homeParam));
-                homeParam.HomeType = Config.HomeType.HS; //홈 유형을 홈 스위치를 찾도록 설정
-                DisplayError(cmlib.Config.SetHomeParam(0, homeParam));
-                DisplayError(cmlib.Home.StartHome(0));
-
                 ret = cmlib.GetStatus(ref cmStatus);
-                if (num == "1")
+                if (num == 2)
                 {
                     ret = cmlib.Home.StartHome(AXIS0);
                 }
-                if (num == "2")
+                if (num == 3)
                 {
                     ret = cmlib.Home.StartHome(AXIS1);
                 }
