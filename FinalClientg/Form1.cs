@@ -18,7 +18,8 @@ using WMX3ApiCLR;
 
 namespace FinalClientg
 {
-    #region
+    public partial class Form1 : Form
+    {
     public enum SettingParams
     {
         VELOCITY =0,
@@ -26,13 +27,14 @@ namespace FinalClientg
         JOG,
         HOMETYPE
     }
-    #endregion
-    public partial class Form1 : Form
-    {
+        #region[Setting Variable]
+
+        String dataReceived;
+
         Motion.PosCommand posCommX;            //유저가 세팅한 param (이게 비어있으면 baseParam을 사용하여 움직일 것)
         Motion.PosCommand posCommY;            //유저가 세팅한 param (이게 비어있으면 baseParam을 사용하여 움직일 것)
 
-        string pattern = @"\[(.*?)\]"; // 정규 표현식 패턴: [] 사이의 모든 문자열
+        string pattern = @"\[(.*?)\]";          // 정규 표현식 패턴: 모든 [] 사이의 문자열을 필터링할 수 있다.
         const int Xaxis = 2;
         const int Yaxis = 3;
         int BTN_MOVING_AXIS = 0;
@@ -44,13 +46,6 @@ namespace FinalClientg
         byte oldanal1 = 0;
         byte oldanal2 = 0;
 
-        private void SendAnalog(int v)
-        {
-            string msg = (v == 2) ? "[ANALOG2:" : "[ANALOG3:";
-            msg += (v == 2) ? anal1.ToString("000") : anal2.ToString("000");
-            msg += "]";
-            SendMessage(msg);
-        }
 
         const int WaitTimeMilliseconds = 10000;
         const int AXIS0 = 2;
@@ -65,6 +60,10 @@ namespace FinalClientg
         bool[] digitalOuptputs;
         bool ableComm = false;
         int jogDirX = 1;
+
+        double oldTargetX = 0;
+        double oldTargetY = 0;
+
         int JogDirX
         {
             get
@@ -97,21 +96,17 @@ namespace FinalClientg
             }
         }
 
+    #endregion
+
         private const int bufferSize = 1024; //메시지를 받을 버퍼의 크기
         private TcpClient client; //편리한 클래스의 client를 생성
         private NetworkStream stream; //네트워크 기반 메세지 전달 통신 수단
         private byte[] buffer; //stream으로부터 받아오는 메세지를 저장할 공간
 
-        String dataReceived;
-
         WMX3Api wmxlib;
         Io iolib;
         CoreMotion cmlib;
         CoreMotionStatus cmStatus;
-
-        double oldTargetX = 0;
-        double oldTargetY = 0;
-        
         public Form1()
         {
             InitializeComponent();
@@ -121,10 +116,8 @@ namespace FinalClientg
             cmlib = new CoreMotion(wmxlib);
             cmStatus = new CoreMotionStatus();
 
-            // 1초마다 메시지 전송을 위한 타이머 설정
-
-            digitalOuptputs = new bool[8];
-
+            digitalOuptputs = new bool[8]; 
+            #region[Frist Param]
             posCommX = new Motion.PosCommand();
             posCommX.Axis = 2;
             posCommX.Target = 24470;
@@ -140,7 +133,7 @@ namespace FinalClientg
             posCommY.Profile.Acc = 3600;
             posCommY.Profile.Dec = 3600;
             posCommY.Profile.Type = ProfileType.Trapezoidal;
-
+            #endregion
 
             System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
             timer.Interval = 1000; // 1초마다
@@ -148,10 +141,10 @@ namespace FinalClientg
             timer.Start();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
+        //private void Form1_Load(object sender, EventArgs e)  //참조 1개 있는데 주석처리 해도 이상없는지 확인 필요
+        //{
 
-        }
+        //}
 
         private void BTN_CONNECT_Click(object sender, EventArgs e)
         {
@@ -181,6 +174,7 @@ namespace FinalClientg
                 MessageBox.Show("연결 중 오류 발생: " + ex.Message);
             }
         }
+
         private void BTN_DISCONNECT_Click(object sender, EventArgs e)
         {
             isNet = false;
@@ -223,17 +217,13 @@ namespace FinalClientg
                     {
                         Init();
                     }
+                    else if (dataReceived.Substring(5, 2) == "SE")
+                    {
+                        MOTORSERVOONOFF(dataReceived.Substring(10, 1));
+                    }
                     else if (dataReceived.Substring(0, 2) == "AL")
                     {
                         ResetAlarm(Convert.ToInt32(dataReceived[dataReceived.Length - 1]));
-                    }
-                    else if (dataReceived.Substring(0, 2) == "DO")
-                    {
-                        IOLED(dataReceived.Substring(2, 2), dataReceived[5] == 'N');
-                    }
-                    else if (dataReceived.Substring(5, 2) == "SE")
-                    {
-                        MOTORSERVOON1(dataReceived.Substring(10, 1));
                     }
                     else if (dataReceived.Substring(5, 2) == "ST")
                     {
@@ -272,10 +262,12 @@ namespace FinalClientg
                             }
                         }
                     }
-                   
-
-            // 다시 비동기로 데이터 수신 대기
-                        stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(OnDataReceived), null);   // OnDataReceived의 재귀함수 형태로 만들어서 메세지를 계속 받을 수 있도록 함
+                    else if (dataReceived.Substring(0, 2) == "DO")
+                    {
+                        IOLED(dataReceived.Substring(2, 2), dataReceived[5] == 'N');
+                    }
+                    // 다시 비동기로 데이터 수신 대기
+                    stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(OnDataReceived), null);   // OnDataReceived의 재귀함수 형태로 만들어서 메세지를 계속 받을 수 있도록 함
                 }
                 else
                 {
@@ -290,7 +282,94 @@ namespace FinalClientg
             }
         }
 
+        private void SendMessage(string message)
+        {
+            try
+            {
+                byte[] data = Encoding.UTF8.GetBytes(message);
+                stream.Write(data, 0, data.Length);
+                
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("메시지 전송 중 오류 발생: " + ex.Message);
+            }
+        }
 
+        private void DisplayError(int num)
+        {
+            if (num != ErrorCode.None)
+            {
+                string errString = WMX3Api.ErrorToString(num);
+                if(num == 65556)
+                {
+                    if (cmStatus.AxesStatus[2].AmpAlarm)
+                    {
+                        SendMessage("[ALARMRESET2]");
+                    }
+                    else if(cmStatus.AxesStatus[3].AmpAlarm)
+                    {
+                        SendMessage("[ALARMRESET3]");
+                    }
+                }
+                MessageBox.Show(errString);
+            }
+        }
+
+        private void ResetAlarm(int num)
+        {
+            DisplayError(cmlib.AxisControl.ClearAxisAlarm(num-48));
+        }
+
+        private void Init()
+        {
+            if (alreadyComm)
+            {
+                DisplayError(wmxlib.StopCommunication());
+                SendMessage("COMMU OFF");
+            }
+            else
+            {
+                wmxlib.CreateDevice("C:\\Program Files\\SoftServo\\WMX3", DeviceType.DeviceTypeNormal);
+                DisplayError(wmxlib.StartCommunication(WaitTimeMilliseconds));
+                cmlib = new CoreMotion(wmxlib);
+                SendMessage("COMMU ON");
+            }
+
+            alreadyComm = !alreadyComm;
+        }
+        private void MOTORSERVOONOFF(string num)
+        {
+
+            if (num == "2")
+            {
+                ret = cmlib.GetStatus(ref cmStatus);
+
+                if (!cmStatus.AxesStatus[AXIS0].ServoOn)
+                {
+                    cmlib.AxisControl.SetServoOn(AXIS0, SERVOON);
+                    cmlib.Config.SetGearRatio(Convert.ToInt32(num), 38364, 360);
+                }
+                else
+                {
+                    cmlib.AxisControl.SetServoOn(AXIS0, SERVOOFF);
+                }
+            }
+            if (num == "3")
+            {
+                ret = cmlib.GetStatus(ref cmStatus);
+
+                if (!cmStatus.AxesStatus[AXIS1].ServoOn)
+                {
+                    cmlib.AxisControl.SetServoOn(AXIS1, SERVOON);
+                    cmlib.Config.SetGearRatio(Convert.ToInt32(num), 38364, 360);
+                }
+                else
+                {
+                    cmlib.AxisControl.SetServoOn(AXIS1, SERVOOFF);
+                }
+            }
+        }
         private void SetParam(SettingParams paramType, int num, int axis)
         {
             switch (paramType)
@@ -369,106 +448,7 @@ namespace FinalClientg
 
             }
         }
-
-        private void SendMessage(string message)
-        {
-            try
-            {
-                byte[] data = Encoding.UTF8.GetBytes(message);
-                stream.Write(data, 0, data.Length);
-                
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("메시지 전송 중 오류 발생: " + ex.Message);
-            }
-        }
-
-        private void DisplayError(int num)
-        {
-            if (num != ErrorCode.None)
-            {
-                string errString = WMX3Api.ErrorToString(num);
-                if(num == 65556)
-                {
-                    if (cmStatus.AxesStatus[2].AmpAlarm)
-                    {
-                        SendMessage("[ALARMRESET2]");
-                    }
-                    else if(cmStatus.AxesStatus[3].AmpAlarm)
-                    {
-                        SendMessage("[ALARMRESET3]");
-                    }
-                }
-                MessageBox.Show(errString);
-            }
-        }
-
-        private void ResetAlarm(int num)
-        {
-            DisplayError(cmlib.AxisControl.ClearAxisAlarm(num-48));
-        }
-
-        private void Init()
-        {
-            if (alreadyComm)
-            {
-                DisplayError(wmxlib.StopCommunication());
-                SendMessage("COMMU OFF");
-            }
-            else
-            {
-                wmxlib.CreateDevice("C:\\Program Files\\SoftServo\\WMX3", DeviceType.DeviceTypeNormal);
-                DisplayError(wmxlib.StartCommunication(WaitTimeMilliseconds));
-                cmlib = new CoreMotion(wmxlib);
-                SendMessage("COMMU ON");
-                //cmlib.AxisControl.SetServoOn(Xaxis, 1);
-                //cmlib.AxisControl.SetServoOn(Yaxis, 1);
-                //cmlib.AxisControl.SetServoOn(0, 1);
-            }
-
-            alreadyComm = !alreadyComm;
-        }
-
-        private void IOLED(string num, bool isOn)
-        {
-            int temp = Convert.ToInt32(num);
-
-            iolib.SetOutBit(temp / 8, temp % 8, Convert.ToByte(isOn));
-        }
-
-        private void MOTORSERVOON1(string num)
-        {
-
-            if (num == "2")
-            {
-                ret = cmlib.GetStatus(ref cmStatus);
-
-                if (!cmStatus.AxesStatus[AXIS0].ServoOn)
-                {
-                    cmlib.AxisControl.SetServoOn(AXIS0, SERVOON);
-                    cmlib.Config.SetGearRatio(Convert.ToInt32(num), 38364, 360);
-                }
-                else
-                {
-                    cmlib.AxisControl.SetServoOn(AXIS0, SERVOOFF);
-                }
-            }
-            if (num == "3")
-            {
-                ret = cmlib.GetStatus(ref cmStatus);
-
-                if (!cmStatus.AxesStatus[AXIS1].ServoOn)
-                {
-                    cmlib.AxisControl.SetServoOn(AXIS1, SERVOON);
-                    cmlib.Config.SetGearRatio(Convert.ToInt32(num), 38364, 360);
-                }
-                else
-                {
-                    cmlib.AxisControl.SetServoOn(AXIS1, SERVOOFF);
-                }
-            }
-        }
+       
         private void timer1_Tick(object sender, EventArgs e)
         {
             if (alreadyComm && isNet)
@@ -529,8 +509,7 @@ namespace FinalClientg
                             timer2.Start();
                             timeronoff.Text = "ON";
                         }
-                        else
-                        //버튼이 눌리거나 떼어진 상황중 떼어진 상황일 때는 타이머를 멈춘다.
+                        else                        //버튼이 눌리거나 떼어진 상황중 떼어진 상황일 때는 타이머를 멈춘다.
                         {
                             timer2.Stop();
                             timeronoff.Text = "OFF";
@@ -637,16 +616,6 @@ namespace FinalClientg
 
         private void MOTORHOME(int num)
         {
-
-            ////원점 파라미터 로드
-            //err = wmxlib_cm.config->GetHomeParam(0, &homeParam);
-
-            ////원점 파라미터 작성
-            //err = wmxlib_cm.config->SetHomeParam(0, &homeParam);
-
-            ////원점 복귀 동작 시작
-            //err = wmxlib_cm.home->StartHome(0);
-
             if (alreadyComm)
             {
                 ret = cmlib.GetStatus(ref cmStatus);
@@ -665,14 +634,22 @@ namespace FinalClientg
         {
             DisplayError(cmlib.Motion.Stop(Convert.ToInt32(num)));
             BTN_MOVING_AXIS = 0;
+        }
 
-            //int err = wmxlib_cm.motion->Stop(0);
-            //if (err != ErrorCode::None)
-            //{
-            //    wmxlib_cm.ErrorToString(err, errString, sizeof(errString));
-            //    printf("Failed to stop motion. Error=%d (%s)\n", err, errString);
-            //    goto exit;
-            //}
+        private void IOLED(string num, bool isOn)
+        {
+            
+            int temp = Convert.ToInt32(num);
+
+            iolib.SetOutBit(temp / 8, temp % 8, Convert.ToByte(isOn));
+        }
+
+        private void SendAnalog(int v)
+        {
+            string msg = (v == 2) ? "[ANALOG2:" : "[ANALOG3:";
+            msg += (v == 2) ? anal1.ToString("000") : anal2.ToString("000");
+            msg += "]";
+            SendMessage(msg);
         }
     }
 }
