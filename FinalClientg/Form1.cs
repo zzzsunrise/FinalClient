@@ -373,9 +373,25 @@ namespace FinalClientg
             if (num != ErrorCode.None)
             {
                 string errString = WMX3Api.ErrorToString(num);
+                if(num == 1577)
+                {
+                    if (cmStatus.AxesStatus[2].AmpAlarm)
+                    {
+                        SendMessage("[ALARMRESET2]");
+                    }
+                    else if(cmStatus.AxesStatus[3].AmpAlarm)
+                    {
+                        SendMessage("[ALARMRESET3]");
+                    }
+                }
                 MessageBox.Show(errString);
             }
         }
+
+        //private void ResetAlarm(int num)
+        //{
+        //    DisplayError(cmlib.Motion.ala)
+        //}
 
         private void Init()
         {
@@ -491,6 +507,13 @@ namespace FinalClientg
                             timeronoff.Text = "OFF";
                         }
                         MoveJog(temp != '\0', i / 4, i);
+                    }
+                    else if(i == 2)
+                    {
+                        if (temp != '\0')
+                        {
+                            SendMessage("[GRAPHCLEAR]");
+                        }
                     }
                     return;
                 }
