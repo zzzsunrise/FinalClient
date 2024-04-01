@@ -198,7 +198,6 @@ namespace FinalClientg
         {
             try
             {
-               
                 int bytesRead = stream.EndRead(ar); // stream은 데이터를 읽는 스트림
                 if (bytesRead > 0)
                 {
@@ -210,6 +209,10 @@ namespace FinalClientg
                     if (dataReceived == "WMX3COMMUICATION")
                     {
                         Init();
+                    }
+                    else if (dataReceived.Substring(0, 2) == "AL")
+                    {
+                        ResetAlarm(Convert.ToInt32(dataReceived[dataReceived.Length - 1]));
                     }
                     else if (dataReceived.Substring(0, 2) == "DO")
                     {
@@ -373,7 +376,7 @@ namespace FinalClientg
             if (num != ErrorCode.None)
             {
                 string errString = WMX3Api.ErrorToString(num);
-                if(num == 1577)
+                if(num == 65556)
                 {
                     if (cmStatus.AxesStatus[2].AmpAlarm)
                     {
@@ -388,10 +391,10 @@ namespace FinalClientg
             }
         }
 
-        //private void ResetAlarm(int num)
-        //{
-        //    DisplayError(cmlib.Motion.ala)
-        //}
+        private void ResetAlarm(int num)
+        {
+            DisplayError(cmlib.AxisControl.ClearAxisAlarm(num-48));
+        }
 
         private void Init()
         {
