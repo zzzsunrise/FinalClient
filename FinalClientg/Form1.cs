@@ -207,7 +207,7 @@ namespace FinalClientg
                     // 받은 메시지를 UI에 표시하기 위해 Invoke 사용
                     Invoke(new Action(() => ListBox_MSG.Items.Add(dataReceived)));
 
-                    if (dataReceived == "WMX3COMUICATION")
+                    if (dataReceived == "WMX3COMMUICATION")
                     {
                         Init();
                     }
