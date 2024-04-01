@@ -38,6 +38,10 @@
             this.BTN_DISCONNECT = new System.Windows.Forms.Button();
             this.ListBox_MSG = new System.Windows.Forms.ListBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.timer2 = new System.Windows.Forms.Timer(this.components);
+            this.timeronoff = new System.Windows.Forms.Label();
+            this.xactualpos = new System.Windows.Forms.Label();
+            this.jogdir = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -128,11 +132,41 @@
             // 
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
+            // timeronoff
+            // 
+            this.timeronoff.AutoSize = true;
+            this.timeronoff.Location = new System.Drawing.Point(345, 70);
+            this.timeronoff.Name = "timeronoff";
+            this.timeronoff.Size = new System.Drawing.Size(38, 12);
+            this.timeronoff.TabIndex = 7;
+            this.timeronoff.Text = "label3";
+            // 
+            // xactualpos
+            // 
+            this.xactualpos.AutoSize = true;
+            this.xactualpos.Location = new System.Drawing.Point(345, 102);
+            this.xactualpos.Name = "xactualpos";
+            this.xactualpos.Size = new System.Drawing.Size(38, 12);
+            this.xactualpos.TabIndex = 8;
+            this.xactualpos.Text = "label4";
+            // 
+            // jogdir
+            // 
+            this.jogdir.AutoSize = true;
+            this.jogdir.Location = new System.Drawing.Point(345, 141);
+            this.jogdir.Name = "jogdir";
+            this.jogdir.Size = new System.Drawing.Size(38, 12);
+            this.jogdir.TabIndex = 9;
+            this.jogdir.Text = "label5";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(282, 349);
+            this.ClientSize = new System.Drawing.Size(514, 349);
+            this.Controls.Add(this.jogdir);
+            this.Controls.Add(this.xactualpos);
+            this.Controls.Add(this.timeronoff);
             this.Controls.Add(this.ListBox_MSG);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -160,6 +194,10 @@
 		private System.Windows.Forms.Button BTN_DISCONNECT;
         private System.Windows.Forms.ListBox ListBox_MSG;
         private System.Windows.Forms.Timer timer1;
+        private System.Windows.Forms.Timer timer2;
+        private System.Windows.Forms.Label timeronoff;
+        private System.Windows.Forms.Label xactualpos;
+        private System.Windows.Forms.Label jogdir;
     }
 }
 

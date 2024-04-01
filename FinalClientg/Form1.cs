@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows.Forms;
 using WMX3ApiCLR;
 
@@ -34,6 +35,7 @@ namespace FinalClientg
         string pattern = @"\[(.*?)\]"; // 정규 표현식 패턴: [] 사이의 모든 문자열
         const int Xaxis = 2;
         const int Yaxis = 3;
+        int BTN_MOVING_AXIS = 0;
 
         bool isNet = false;
 
@@ -52,6 +54,10 @@ namespace FinalClientg
         int jogDirX = 1;
         int JogDirX
         {
+            get
+            {
+                return jogDirX;
+            }
             set
             {
                 if(value != jogDirX)
@@ -64,6 +70,10 @@ namespace FinalClientg
         int jogDirY = 1;
         int JogDirY
         {
+            get
+            {
+                return jogDirY;
+            }
             set
             {
                 if (value != jogDirY)
@@ -104,18 +114,18 @@ namespace FinalClientg
 
             posCommX = new Motion.PosCommand();
             posCommX.Axis = 2;
-            posCommX.Target = 3600;
+            posCommX.Target = 24470;
             posCommX.Profile.Velocity = 360;
-            posCommX.Profile.Acc = 360;
-            posCommX.Profile.Dec = 360;
+            posCommX.Profile.Acc = 3600;
+            posCommX.Profile.Dec = 3600;
             posCommX.Profile.Type = ProfileType.Trapezoidal;
               
             posCommY = new Motion.PosCommand();
             posCommY.Axis = 3;
-            posCommY.Target = 3600;
+            posCommY.Target = 23882;
             posCommY.Profile.Velocity = 360;
-            posCommY.Profile.Acc = 360;
-            posCommY.Profile.Dec = 360;
+            posCommY.Profile.Acc = 3600;
+            posCommY.Profile.Dec = 3600;
             posCommY.Profile.Type = ProfileType.Trapezoidal;
 
 
@@ -217,7 +227,7 @@ namespace FinalClientg
                     {
                         MOTORHOME(Convert.ToInt32( dataReceived.Substring(10, 1)));
                     }
-                    if (dataReceived.Substring(0, 2) == "CH")
+                    else if (dataReceived.Substring(0, 2) == "CH")
                     {
                         int tempAxis = 2 + Convert.ToInt32(dataReceived[6] == '3');
                         Match match = Regex.Match(dataReceived, pattern);
@@ -273,10 +283,14 @@ namespace FinalClientg
                     if(axis == 2)
                     {
                         posCommX.Profile.Velocity = num;
+                        posCommX.Profile.Acc = num*10;
+                        posCommX.Profile.Dec = num*10;
                     }
                     else
                     {
                         posCommY.Profile.Velocity = num;
+                        posCommY.Profile.Acc = num * 10;
+                        posCommY.Profile.Dec = num * 10;
                     }
                     break;
                 case SettingParams.HOMETYPE:
@@ -346,7 +360,7 @@ namespace FinalClientg
             {
                 byte[] data = Encoding.UTF8.GetBytes(message);
                 stream.Write(data, 0, data.Length);
-                //Thread.Sleep(1000);
+                
             }
             catch (Exception ex)
             {
@@ -428,20 +442,27 @@ namespace FinalClientg
             if (alreadyComm && isNet)
             {
 
+                Thread.Sleep(500);
                 DisplayError(cmlib.GetStatus(ref cmStatus));
-                string message = "X:";
+                string message = "[X:";
                 message += cmStatus.AxesStatus[Xaxis].ActualPos.ToString("0.00");
+                message += "]";
                 SendMessage(message);
-                message = "Y:";
+                
+
+                message = "[Y:";
                 message += cmStatus.AxesStatus[Yaxis].ActualPos.ToString("0.00");
+                message += "]";
                 SendMessage(message);
                 CheckBTN();
-
+                xactualpos.Text = cmStatus.AxesStatus[Xaxis].ActualPos.ToString();
+                jogdir.Text = (posCommX.Target < 0) ? "<<<<" : ">>>>";
             }
         }
 
         private void CheckBTN()
         {
+
             byte temp = 0;
             bool old = false;
             
@@ -456,12 +477,45 @@ namespace FinalClientg
                     digitalOuptputs[i] = temp != '\0';
                     if (i == 0 || i == 1 || i == 4 || i == 5)
                     {
+                        if(temp != '\0')            //버튼이 눌리거나 떼어진 상황중 눌린 상황일 때는 타이머를 시작하고
+                        {
+                            timer2.Interval = 50; // 1초마다
+                            timer2.Tick += timer2_Tick;
+                            timer2.Start();
+                            timeronoff.Text = "ON";
+                        }
+                        else
+                        //버튼이 눌리거나 떼어진 상황중 떼어진 상황일 때는 타이머를 멈춘다.
+                        {
+                            timer2.Stop();
+                            timeronoff.Text = "OFF";
+                        }
                         MoveJog(temp != '\0', i / 4, i);
                     }
                     return;
                 }
             }
 
+        }
+
+        private void timer2_Tick(object sender, EventArgs e)
+        {
+            DisplayError(cmlib.GetStatus(ref cmStatus));
+            if (BTN_MOVING_AXIS == 2)
+            {
+                if (cmStatus.AxesStatus[AXIS0].ActualPos <= 0 && posCommX.Target < 0)
+                {
+                    MOTORSTOP("2");
+                }
+
+            }
+            else if(BTN_MOVING_AXIS == 3)
+            {
+                if (cmStatus.AxesStatus[AXIS1].ActualPos <= 0 && posCommY.Target < 0)
+                {
+                    MOTORSTOP("3");
+                }
+            }
         }
 
         /// <summary>
@@ -474,10 +528,12 @@ namespace FinalClientg
             if(btn > 3)
             {
                 oldTargetY = posCommY.Target;
+                BTN_MOVING_AXIS = 3;
             }
             else
             {
                 oldTargetX = posCommX.Target;
+                BTN_MOVING_AXIS = 2;
 
             }
             if (isBTNpressed)
@@ -554,6 +610,7 @@ namespace FinalClientg
         private void MOTORSTOP(string num)
         {
             DisplayError(cmlib.Motion.Stop(Convert.ToInt32(num)));
+            BTN_MOVING_AXIS = 0;
 
             //int err = wmxlib_cm.motion->Stop(0);
             //if (err != ErrorCode::None)
