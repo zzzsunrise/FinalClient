@@ -42,6 +42,9 @@
             this.timeronoff = new System.Windows.Forms.Label();
             this.xactualpos = new System.Windows.Forms.Label();
             this.jogdir = new System.Windows.Forms.Label();
+            this.analog1 = new System.Windows.Forms.Label();
+            this.analog2 = new System.Windows.Forms.Label();
+            this.timer3 = new System.Windows.Forms.Timer(this.components);
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -159,11 +162,31 @@
             this.jogdir.TabIndex = 9;
             this.jogdir.Text = "label5";
             // 
+            // analog1
+            // 
+            this.analog1.AutoSize = true;
+            this.analog1.Location = new System.Drawing.Point(347, 214);
+            this.analog1.Name = "analog1";
+            this.analog1.Size = new System.Drawing.Size(38, 12);
+            this.analog1.TabIndex = 10;
+            this.analog1.Text = "label3";
+            // 
+            // analog2
+            // 
+            this.analog2.AutoSize = true;
+            this.analog2.Location = new System.Drawing.Point(349, 245);
+            this.analog2.Name = "analog2";
+            this.analog2.Size = new System.Drawing.Size(38, 12);
+            this.analog2.TabIndex = 11;
+            this.analog2.Text = "label3";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(514, 349);
+            this.Controls.Add(this.analog2);
+            this.Controls.Add(this.analog1);
             this.Controls.Add(this.jogdir);
             this.Controls.Add(this.xactualpos);
             this.Controls.Add(this.timeronoff);
@@ -198,6 +221,9 @@
         private System.Windows.Forms.Label timeronoff;
         private System.Windows.Forms.Label xactualpos;
         private System.Windows.Forms.Label jogdir;
+        private System.Windows.Forms.Label analog1;
+        private System.Windows.Forms.Label analog2;
+        private System.Windows.Forms.Timer timer3;
     }
 }
 

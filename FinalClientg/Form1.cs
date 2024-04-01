@@ -39,6 +39,19 @@ namespace FinalClientg
 
         bool isNet = false;
 
+        byte anal1 = 0;
+        byte anal2 = 0;
+        byte oldanal1 = 0;
+        byte oldanal2 = 0;
+
+        private void SendAnalog(int v)
+        {
+            string msg = (v == 2) ? "[ANALOG2:" : "[ANALOG3:";
+            msg += (v == 2) ? anal1.ToString("000") : anal2.ToString("000");
+            msg += "]";
+            SendMessage(msg);
+        }
+
         const int WaitTimeMilliseconds = 10000;
         const int AXIS0 = 2;
         const int AXIS1 = 3;
@@ -475,7 +488,20 @@ namespace FinalClientg
                 SendMessage(message);
                 CheckBTN();
                 xactualpos.Text = cmStatus.AxesStatus[Xaxis].ActualPos.ToString();
-                jogdir.Text = (posCommX.Target < 0) ? "<<<<" : ">>>>";
+
+                DisplayError(iolib.GetInAnalogDataUChar(22, ref anal1));
+                if(anal1 != oldanal1)
+                {
+                    SendAnalog(2);
+                    oldanal1 = anal1; 
+                }
+
+                DisplayError(iolib.GetInAnalogDataUChar(24, ref anal2));
+                if(anal2 != oldanal2)
+                {
+                    SendAnalog(3);
+                    oldanal2 = anal2;
+                }
             }
         }
 
@@ -527,6 +553,8 @@ namespace FinalClientg
         private void timer2_Tick(object sender, EventArgs e)
         {
             DisplayError(cmlib.GetStatus(ref cmStatus));
+            byte temp = 0;
+            iolib.GetInAnalogDataUChar(22, ref temp);
             if (BTN_MOVING_AXIS == 2)
             {
                 if (cmStatus.AxesStatus[AXIS0].ActualPos <= 0 && posCommX.Target < 0)
