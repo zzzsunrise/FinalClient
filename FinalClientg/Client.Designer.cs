@@ -32,14 +32,14 @@
             this.text_IP = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.text_PORT = new System.Windows.Forms.TextBox();
-            this.BTN_CONNECT = new System.Windows.Forms.Button();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.BTN_DISCONNECT = new System.Windows.Forms.Button();
             this.ListBox_MSG = new System.Windows.Forms.ListBox();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.timer2 = new System.Windows.Forms.Timer(this.components);
             this.timer3 = new System.Windows.Forms.Timer(this.components);
+            this.BTN_DISCONNECT = new System.Windows.Forms.Button();
+            this.text_PORT = new System.Windows.Forms.TextBox();
+            this.BTN_CONNECT = new System.Windows.Forms.Button();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -55,22 +55,46 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(41, 50);
+            this.label1.Location = new System.Drawing.Point(19, 52);
             this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(44, 12);
+            this.label1.Size = new System.Drawing.Size(67, 12);
             this.label1.TabIndex = 1;
-            this.label1.Text = "IP 주소";
+            this.label1.Text = "IP Address";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(27, 71);
+            this.label2.Location = new System.Drawing.Point(22, 80);
             this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(55, 12);
+            this.label2.Size = new System.Drawing.Size(62, 12);
             this.label2.TabIndex = 3;
-            this.label2.Text = "Port 번호";
+            this.label2.Text = "Port  Num";
+            // 
+            // ListBox_MSG
+            // 
+            this.ListBox_MSG.FormattingEnabled = true;
+            this.ListBox_MSG.ItemHeight = 12;
+            this.ListBox_MSG.Location = new System.Drawing.Point(15, 182);
+            this.ListBox_MSG.Name = "ListBox_MSG";
+            this.ListBox_MSG.Size = new System.Drawing.Size(250, 148);
+            this.ListBox_MSG.TabIndex = 6;
+            // 
+            // timer1
+            // 
+            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // BTN_DISCONNECT
+            // 
+            this.BTN_DISCONNECT.Location = new System.Drawing.Point(75, 111);
+            this.BTN_DISCONNECT.Margin = new System.Windows.Forms.Padding(2);
+            this.BTN_DISCONNECT.Name = "BTN_DISCONNECT";
+            this.BTN_DISCONNECT.Size = new System.Drawing.Size(142, 21);
+            this.BTN_DISCONNECT.TabIndex = 6;
+            this.BTN_DISCONNECT.Text = "Disconnect";
+            this.BTN_DISCONNECT.UseVisualStyleBackColor = true;
+            this.BTN_DISCONNECT.Click += new System.EventHandler(this.BTN_DISCONNECT_Click);
             // 
             // text_PORT
             // 
@@ -88,7 +112,7 @@
             this.BTN_CONNECT.Name = "BTN_CONNECT";
             this.BTN_CONNECT.Size = new System.Drawing.Size(142, 21);
             this.BTN_CONNECT.TabIndex = 4;
-            this.BTN_CONNECT.Text = "접속";
+            this.BTN_CONNECT.Text = "Connect";
             this.BTN_CONNECT.UseVisualStyleBackColor = true;
             this.BTN_CONNECT.Click += new System.EventHandler(this.BTN_CONNECT_Click);
             // 
@@ -104,31 +128,7 @@
             this.groupBox1.Size = new System.Drawing.Size(250, 145);
             this.groupBox1.TabIndex = 5;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "CONNECT";
-            // 
-            // BTN_DISCONNECT
-            // 
-            this.BTN_DISCONNECT.Location = new System.Drawing.Point(75, 111);
-            this.BTN_DISCONNECT.Margin = new System.Windows.Forms.Padding(2);
-            this.BTN_DISCONNECT.Name = "BTN_DISCONNECT";
-            this.BTN_DISCONNECT.Size = new System.Drawing.Size(142, 21);
-            this.BTN_DISCONNECT.TabIndex = 6;
-            this.BTN_DISCONNECT.Text = "접속 해제";
-            this.BTN_DISCONNECT.UseVisualStyleBackColor = true;
-            this.BTN_DISCONNECT.Click += new System.EventHandler(this.BTN_DISCONNECT_Click);
-            // 
-            // ListBox_MSG
-            // 
-            this.ListBox_MSG.FormattingEnabled = true;
-            this.ListBox_MSG.ItemHeight = 12;
-            this.ListBox_MSG.Location = new System.Drawing.Point(15, 182);
-            this.ListBox_MSG.Name = "ListBox_MSG";
-            this.ListBox_MSG.Size = new System.Drawing.Size(250, 148);
-            this.ListBox_MSG.TabIndex = 6;
-            // 
-            // timer1
-            // 
-            this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            this.groupBox1.Text = "Client";
             // 
             // Form1
             // 
@@ -142,7 +142,7 @@
             this.Controls.Add(this.groupBox1);
             this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "Client";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.ResumeLayout(false);
@@ -155,14 +155,14 @@
 		private System.Windows.Forms.TextBox text_IP;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.Label label2;
-		private System.Windows.Forms.TextBox text_PORT;
-		private System.Windows.Forms.Button BTN_CONNECT;
-		private System.Windows.Forms.GroupBox groupBox1;
-		private System.Windows.Forms.Button BTN_DISCONNECT;
         private System.Windows.Forms.ListBox ListBox_MSG;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Timer timer2;
         private System.Windows.Forms.Timer timer3;
+        private System.Windows.Forms.Button BTN_DISCONNECT;
+        private System.Windows.Forms.TextBox text_PORT;
+        private System.Windows.Forms.Button BTN_CONNECT;
+        private System.Windows.Forms.GroupBox groupBox1;
     }
 }
 

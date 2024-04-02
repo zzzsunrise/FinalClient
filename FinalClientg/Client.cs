@@ -521,34 +521,35 @@ namespace FinalClientg
 
         private void CheckBTN()
         {
-
             byte temp = 0;
             bool old = false;
             
             for (int i = 0; i < 8; i++)
             {
-                old = digitalOuptputs[i];  //전역 bool 배열에 있는 원래 값을 담아둔다.
+                old = digitalOuptputs[i];  //전역 bool 배열에 있는 원래 값을 담아둠
 
                 iolib.GetInBit(20, i, ref temp); //파라미터 1.버튼 주소, 2.몇번째 버튼인지, 해당 값을 저장할 byte 변수
 
-                if (old != (temp != '\0'))  //버튼이 떼어진 상태면 \0이 저장된다. 눌렸는지에 대한 bool값이고 그것이 원래 값과 다를 때만 코드 진입한다.
+                //버튼이 떼어진 상태면 \0이 저장된다. 눌렸는지에 대한 bool값이고 그것이 원래 값과 다를 때만 코드 진입
+                if (old != (temp != '\0')) 
                 {
-                    digitalOuptputs[i] = temp != '\0';  //지금 들어온 값으로 전역변수 배열의 값을 update해준다.
+                    digitalOuptputs[i] = temp != '\0';  //지금 들어온 값으로 전역변수 배열의 값을 update
 
                     if (i == 0 || i == 1 || i == 4 || i == 5)  //왼쪽 네 개의 버튼이 눌렸을 때는 모터 움직임 명령
                     {
-                        if(temp != '\0')            //버튼이 눌린 상황일 때는 타이머를 시작하고
+                        if(temp != '\0')            //버튼이 눌린 상황일 때는 타이머를 시작
                         {
                             timer2.Interval = 50; 
                             timer2.Tick += timer2_Tick;
-                            timer2.Start();         //이 타이머에서는 모터의 위치를 체크하고 0이면 멈추도록 모니터링한다.
+                            timer2.Start();         //이 타이머에서는 모터의 위치를 체크하고 0이면 멈추도록 모니터링
                         }
-                        else                        //버튼이 떼어진 상황일 때는 타이머를 멈춘다.
+                        else                        //버튼이 떼어진 상황일 때는 타이머를 멈춤
                         {
                             timer2.Stop();
                         }
 
-                        MoveJog(temp != '\0', i / 4, i); //파라미터 [1.버튼이 눌렸으면 true] [2.첫번째 줄 버튼 두개면 0, 두 번째 줄 버튼 두 개면 2] [3.버튼 번호]
+                        //파라미터 [1.버튼이 눌렸으면 true] [2.첫번째 줄 버튼 두개면 0, 두 번째 줄 버튼 두 개면 2] [3.버튼 번호]
+                        MoveJog(temp != '\0', i / 4, i); 
                     }
                     else if(i == 2)  //클리어 버튼인 2번 버튼이 떼어진 게 아니라 눌린 거면 메시지 전송
                     {
@@ -560,7 +561,6 @@ namespace FinalClientg
                     return;
                 }
             }
-
         }
 
         private void timer2_Tick(object sender, EventArgs e) //버튼이 눌린 상태일 때만 돌아가는 타이머
@@ -674,19 +674,19 @@ namespace FinalClientg
             BTN_MOVING_AXIS = 0;  //모니터링하는 함수에 들어가지 않도록 움직이는 중이 아닐 때는 0으로 설정
         }
 
-        private void IOLED(string num, bool isOn)  //파라미터 [1: 버튼의 번호 00 ~ 15 파라미터] [2: true면 키고 false면 끔]
-        {
-            int temp = Convert.ToInt32(num);  //00 ~ 15 스트링을 숫자로 변환
-
-            iolib.SetOutBit(temp / 8, temp % 8, Convert.ToByte(isOn));  //몇번째 줄 몇번째 LED를 1이면 ON, 0이면 OFF할 건지 명령
-        }
-
         private void SendAnalog(int v)  //timer1에서 아날로그 값이 바뀌었을 때 호출하는 함수 (왼쪽이면 2, 오른쪽이면 3이 들어온다.)
         {
             string msg = (v == 2) ? "[ANALOG2:" : "[ANALOG3:";  //왼쪽 가변저항 값이 바뀌었을 때는 "[ANALOG2:"를 넣고 오른쪽일 때는 3이 들어간다.
             msg += (v == 2) ? anal1.ToString("000") : anal2.ToString("000");  //왼쪽 가변저항 값이 바뀐 거면 anal1변수 값을, 오른쪽일 때는 anal2변수 값을 무조건 세자리로 바꾸어 저장
             msg += "]";
             SendMessage(msg);  //괄호 닫고 서버에 전송
+        }
+
+        private void IOLED(string num, bool isOn)  //파라미터 [1: 버튼의 번호 00 ~ 15 파라미터] [2: true면 키고 false면 끔]
+        {
+            int temp = Convert.ToInt32(num);  //00 ~ 15 스트링을 숫자로 변환
+
+            iolib.SetOutBit(temp / 8, temp % 8, Convert.ToByte(isOn));  //몇번째 줄 몇번째 LED를 1이면 ON, 0이면 OFF할 건지 명령
         }
     }
 }
