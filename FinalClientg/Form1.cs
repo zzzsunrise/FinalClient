@@ -217,6 +217,10 @@ namespace FinalClientg
                     {
                         Init();
                     }
+                    else if (dataReceived.Substring(0, 2) == "DO")
+                    {
+                        IOLED(dataReceived.Substring(2, 2), dataReceived[5] == 'N');
+                    }
                     else if (dataReceived.Substring(5, 2) == "SE")
                     {
                         MOTORSERVOONOFF(dataReceived.Substring(10, 1));
@@ -261,10 +265,6 @@ namespace FinalClientg
                                 JogDirY = (value == 0) ? -1 : 1;
                             }
                         }
-                    }
-                    else if (dataReceived.Substring(0, 2) == "DO")
-                    {
-                        IOLED(dataReceived.Substring(2, 2), dataReceived[5] == 'N');
                     }
                     // 다시 비동기로 데이터 수신 대기
                     stream.BeginRead(buffer, 0, buffer.Length, new AsyncCallback(OnDataReceived), null);   // OnDataReceived의 재귀함수 형태로 만들어서 메세지를 계속 받을 수 있도록 함
@@ -467,7 +467,6 @@ namespace FinalClientg
                 message += "]";
                 SendMessage(message);
                 CheckBTN();
-                xactualpos.Text = cmStatus.AxesStatus[Xaxis].ActualPos.ToString();
 
                 DisplayError(iolib.GetInAnalogDataUChar(22, ref anal1));
                 if(anal1 != oldanal1)
@@ -507,12 +506,10 @@ namespace FinalClientg
                             timer2.Interval = 50; // 1초마다
                             timer2.Tick += timer2_Tick;
                             timer2.Start();
-                            timeronoff.Text = "ON";
                         }
                         else                        //버튼이 눌리거나 떼어진 상황중 떼어진 상황일 때는 타이머를 멈춘다.
                         {
                             timer2.Stop();
-                            timeronoff.Text = "OFF";
                         }
                         MoveJog(temp != '\0', i / 4, i);
                     }
