@@ -99,7 +99,7 @@ namespace FinalClientg
 
     #endregion
 
-        private const int bufferSize = 1024;        //메시지를 받을 버퍼의 크기
+        private const int bufferSize = 2048;        //메시지를 받을 버퍼의 크기
         private TcpClient client;                   //편리한 클래스의 client를 생성
         private NetworkStream stream;               //네트워크 기반 메세지 전달 통신 수단
         private byte[] buffer;                      //stream으로부터 받아오는 메세지를 저장할 공간
