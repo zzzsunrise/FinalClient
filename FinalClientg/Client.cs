@@ -347,6 +347,7 @@ namespace FinalClientg
         private void ResetAlarm(int num)
         {
             DisplayError(cmlib.AxisControl.ClearAxisAlarm(num-48));
+            DisplayError(cmlib.AxisControl.ClearAmpAlarm(num-48));
         }
 
         private void Init()
